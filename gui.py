@@ -4,16 +4,6 @@ from PySide6.QtWidgets import *
 import time
 import sys
 
-"""
-to do:
-- fix timer functionality: DONE!
-- file that stores previously selected timers: SOLVED. IN PROCESS OF INTEGRATION.
-- show when the timer will end: ONGOING.
-- implement multithreading and multiprocessing: DONE!.
-- implement proper stop button: DONE!
-- fix ui look: DONE!
-I won't back away. I'm moving forward. Just like a centipede.
-"""
 
 
 class Worker(QThread):
