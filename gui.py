@@ -6,6 +6,7 @@ import sys
 
 
 
+
 class Worker(QThread):
 
     hrsSignal, minsSignal, secsSignal, timeExpressionSignal = Signal(str), Signal(str), Signal(str), Signal(str)
@@ -43,8 +44,7 @@ class Worker(QThread):
         print('Timer has stopped.')
         self.hrs, self.mins, self.secs = 0, 0, 0
     def pause(self):
-        self.programStatus = False
-
+        self.runningStatus = False
 
 
 class Window(QWidget):
@@ -54,138 +54,154 @@ class Window(QWidget):
 
 
 
-
         self.setStyleSheet('background-color: #171515; color: #151515;')
         self.setWindowTitle("jRemite")
         self.setWindowFlag(Qt.FramelessWindowHint)
-        self.setFixedSize(600, 300)
+        self.setWindowIcon(QIcon('tragedy.png'))
+        self.resize(700, 300)
         self.initGui()
 
     def initGui(self):
 
+
+
+        self.exitBtn = QPushButton(parent=self, text='X')
+        self.exitBtn.clicked.connect(self.closeEvent)
+        self.exitBtn.clicked.connect(exit)
+        self.exitBtn.setFont(QFont('Arial', 12))
+        self.exitBtn.setStyleSheet('color: white; border: 3px solid; font-weight: bold; border-top-color: #B3B6B7; border-bottom-color: #B3B6B7; border-left-color: #B3B6B7; border-right-color: #B3B6B7; ')        
+        self.exitBtn.move(600, 0)
+
+        self.minimizeBtn = QPushButton(parent=self, text='-')
+        self.minimizeBtn.clicked.connect(self.showMinimized)
+        self.minimizeBtn.setFont(QFont('Arial', 12))
+        self.minimizeBtn.setStyleSheet('color: white; border: 3px solid; font-weight: bold; border-top-color: #B3B6B7; border-bottom-color: #B3B6B7; border-left-color: #B3B6B7; border-right-color: #B3B6B7; ')
+        self.minimizeBtn.move(505, 0)
         
-
-        self.onlyInt = QIntValidator()
-        
-        self.buttonLayout = QHBoxLayout(self)
-
-
-        self.startTimerButton = QPushButton(parent=self)
-        self.startTimerButton.setText('Start')
-        self.startTimerButton.setStyleSheet('background-color: #070036; color: white;')
-        self.startTimerButton.clicked.connect(lambda: self.startTimerButton.setEnabled(False))
-        self.startTimerButton.clicked.connect(lambda: self.stopTimerButton.setEnabled(True))
-        self.startTimerButton.clicked.connect(self.beginTimer)
-
-
-        
-
-        self.pauseTimerButton = QPushButton(parent=self)
-        self.pauseTimerButton.setText('Pause')
-        self.pauseTimerButton.setStyleSheet('background-color: #B3B6B7; color: white;')
-        self.pauseTimerButton.setEnabled(False)
-
-        """
-        self.pauseTimerButton.clicked.connect(lambda: self.startTimerButton.setEnabled(True))
-        self.pauseTimerButton.clicked.connect(lambda: self.stopTimerButton.setEnabled(False))
-        self.pauseTimerButton.clicked.connect(lambda: self.timerWorker.stop())
-        self.pauseTimerButton.clicked.connect(lambda: self.hrsBox.setText('00'))
-        self.pauseTimerButton.clicked.connect(lambda: self.minsBox.setText('00'))
-        self.pauseTimerButton.clicked.connect(lambda: self.secsBox.setText('00'))
-        """
-
-
-        self.stopTimerButton = QPushButton(parent=self)
-        self.stopTimerButton.setText('Stop')
-        self.stopTimerButton.setStyleSheet('background-color: #2C0000; color: white;')
-        self.stopTimerButton.setEnabled(False)
-
-        self.stopTimerButton.clicked.connect(lambda: self.startTimerButton.setEnabled(True))
-        self.stopTimerButton.clicked.connect(lambda: self.stopTimerButton.setEnabled(False))
-        self.stopTimerButton.clicked.connect(lambda: self.timerWorker.stop())
-        self.stopTimerButton.clicked.connect(lambda: self.hrsBox.setText('00'))
-        self.stopTimerButton.clicked.connect(lambda: self.minsBox.setText('00'))
-        self.stopTimerButton.clicked.connect(lambda: self.secsBox.setText('00'))
+ 
         
 
 
-        self.startTimerButton.setFixedWidth(120)
-        self.pauseTimerButton.setFixedWidth(120)
-        self.stopTimerButton.setFixedWidth(120)
+
+
+
+        self.currentTimeLabel = QLabel(parent=self, text='Current Time: ')
+        self.currentTimeLabel.setFont(QFont('Times New Roman', 12))
+        self.currentTimeLabel.setStyleSheet('color: white;')
+        self.currentTimeLabel.setAlignment(Qt.AlignCenter)
+        self.currentTimeLabel.move(10, self.height() - 40)
 
 
 
 
-        self.hrsBox = QLineEdit(self)
-        self.hrsBox.setFixedSize(410/3, 60)
-        self.hrsBox.move(90, 90)
-
-        self.minsBox = QLineEdit(self)
-        self.minsBox.setFixedSize(410/3, 60)
-        self.minsBox.move(85 + 410/3, 90)
-
-        self.secsBox = QLineEdit(self)
-        self.secsBox.setFixedSize(410/3 + 10, 60)
-        self.secsBox.move(80 + 2 * 410/3, 90)
+        self.endTimeLabel = QLabel(parent=self, text='Time Until End: ')
+        self.endTimeLabel.setFont(QFont('Times New Roman', 12))
+        self.endTimeLabel.setStyleSheet('color: white;')
+        self.endTimeLabel.setAlignment(Qt.AlignCenter)
+        self.endTimeLabel.move(400, self.height() - 40)
 
 
 
-        self.hrsBox.setStyleSheet('color: white;')
-        self.minsBox.setStyleSheet('color: white;')
-        self.secsBox.setStyleSheet('color: white;')
 
 
-        self.hrsBox.setText('00')
-        self.minsBox.setText('00')
-        self.secsBox.setText('00')
+        self.buttonsList = [QPushButton(parent=self, text='Start'), QPushButton(parent=self, text='Pause'), QPushButton(parent=self, text='Stop')]
+        self.labelsList = [QLabel(parent=self, text='Hours'), QLabel(parent=self, text='Minutes'), QLabel(parent=self, text='Seconds')]
+        self.entriesList = [QLineEdit(parent=self, text='00'), QLineEdit(parent=self, text='00'), QLineEdit(parent=self, text='00')]
 
-        self.hrsBox.setFont(QFont('Arial', 25))
-        self.minsBox.setFont(QFont('Arial', 25))
-        self.secsBox.setFont(QFont('Arial', 25))
-
-
-        self.hrsBox.setAlignment(Qt.AlignCenter)
-        self.minsBox.setAlignment(Qt.AlignCenter)
-        self.secsBox.setAlignment(Qt.AlignCenter)
-
-
-        self.hrsBox.setValidator(self.onlyInt)
-        self.minsBox.setValidator(self.onlyInt)
-        self.secsBox.setValidator(self.onlyInt)
-
-
-        self.hrsBox.setMaxLength(2)
-        self.minsBox.setMaxLength(2)
-        self.secsBox.setMaxLength(2)
-
-
-        self.hrsBox.returnPressed.connect(self.beginTimer)
-        self.minsBox.returnPressed.connect(self.beginTimer)
-        self.secsBox.returnPressed.connect(self.beginTimer)
+        self.mainLayout = QVBoxLayout(self)
+        self.buttonsLayout = QHBoxLayout(parent=self.mainLayout)
+        self.labelsLayout = QHBoxLayout(parent=self.mainLayout)
+        self.entriesLayout = QHBoxLayout(parent=self.mainLayout)
 
 
 
-        self.hoursLabel = QLabel(self)
-        self.hoursLabel.setText('Hours')
-        self.hoursLabel.setStyleSheet('background-color: #171515; color: #565656;')
-        self.hoursLabel.setFont(QFont('Times New Roman', 20))
-        self.hoursLabel.move(120, 50)
 
 
-        self.minutesLabel = QLabel(self)
-        self.minutesLabel.setText('Minutes')
-        self.minutesLabel.setStyleSheet('background-color: #171515; color: #565656;')
-        self.minutesLabel.setFont(QFont('Times New Roman', 20))
-        self.minutesLabel.move(240, 50)
+        self.buttonsList[0].setStyleSheet('background-color: #070036; color: white;')
+        self.buttonsList[0].clicked.connect(lambda: self.buttonsList[0].setEnabled(False))
+        self.buttonsList[0].clicked.connect(lambda: self.buttonsList[1].setEnabled(True))
+        self.buttonsList[0].clicked.connect(lambda: self.buttonsList[2].setEnabled(True))
+        self.buttonsList[0].clicked.connect(lambda: self.entriesList[0].setEnabled(False))
+        self.buttonsList[0].clicked.connect(lambda: self.entriesList[1].setEnabled(False))
+        self.buttonsList[0].clicked.connect(lambda: self.entriesList[2].setEnabled(False))
+        self.buttonsList[0].clicked.connect(self.beginTimer)
 
 
-        self.secondsLabel = QLabel(self)
-        self.secondsLabel.setText('Seconds')
-        self.secondsLabel.setStyleSheet('background-color: #171515; color: #565656;')
-        self.secondsLabel.setFont(QFont('Times New Roman', 20))
-        self.secondsLabel.move(370, 50)
+    
+        self.buttonsList[1].setStyleSheet('background-color: #005B6F; color: white;')
+        self.buttonsList[1].clicked.connect(lambda: self.timerWorker.pause())
+        self.buttonsList[1].clicked.connect(lambda: self.buttonsList[0].setEnabled(True))
+        self.buttonsList[1].clicked.connect(lambda: self.buttonsList[1].setEnabled(False))
+        self.buttonsList[1].clicked.connect(lambda: self.buttonsList[2].setEnabled(True))
+        self.buttonsList[1].clicked.connect(lambda: self.entriesList[0].setEnabled(True))
+        self.buttonsList[1].clicked.connect(lambda: self.entriesList[1].setEnabled(True))
+        self.buttonsList[1].clicked.connect(lambda: self.entriesList[2].setEnabled(True))
+        self.buttonsList[1].setEnabled(False)
 
-        
+
+        self.buttonsList[2].setStyleSheet('background-color: #2C0000; color: white;')
+        self.buttonsList[2].clicked.connect(lambda: self.buttonsList[0].setEnabled(True))
+        self.buttonsList[2].clicked.connect(lambda: self.buttonsList[1].setEnabled(False))
+        self.buttonsList[2].clicked.connect(lambda: self.buttonsList[2].setEnabled(False))
+        self.buttonsList[2].clicked.connect(lambda: self.entriesList[0].setEnabled(True))
+        self.buttonsList[2].clicked.connect(lambda: self.entriesList[1].setEnabled(True))
+        self.buttonsList[2].clicked.connect(lambda: self.entriesList[2].setEnabled(True))
+        self.buttonsList[2].clicked.connect(lambda: self.entriesList[0].setText('00'))
+        self.buttonsList[2].clicked.connect(lambda: self.entriesList[1].setText('00'))
+        self.buttonsList[2].clicked.connect(lambda: self.entriesList[2].setText('00'))
+        self.buttonsList[2].clicked.connect(lambda: self.timerWorker.stop())
+        self.buttonsList[2].setEnabled(False)
+
+
+        for i in range(len(self.entriesList)):
+            self.entriesList[i].setStyleSheet('color: white;')
+            self.entriesList[i].setAlignment(Qt.AlignCenter)
+            self.entriesList[i].setValidator(QIntValidator())
+            self.entriesList[i].setMaxLength(2)
+            self.entriesList[i].setFont(QFont('Arial', 25))
+            self.entriesList[i].returnPressed.connect(self.beginTimer)
+            self.entriesList[i].returnPressed.connect(lambda: self.buttonsList[0].setEnabled(False))
+            self.entriesList[i].returnPressed.connect(lambda: self.buttonsList[1].setEnabled(True))
+            self.entriesList[i].returnPressed.connect(lambda: self.buttonsList[2].setEnabled(True))
+            self.entriesList[i].returnPressed.connect(lambda: self.entriesList[0].setEnabled(False))
+            self.entriesList[i].returnPressed.connect(lambda: self.entriesList[1].setEnabled(False))
+            self.entriesList[i].returnPressed.connect(lambda: self.entriesList[2].setEnabled(False))
+            self.entriesList[i].setText('00')
+        for j in range(len(self.labelsList)):
+            self.labelsList[j].setStyleSheet('background-color: #171515; color: white;')
+            self.labelsList[j].setAlignment(Qt.AlignCenter)
+            self.labelsList[j].setFont(QFont('Times New Roman', 20))
+        for k in range(len(self.labelsList)):
+            self.labelsLayout.addWidget(self.labelsList[k])
+        for i in range(len(self.buttonsList)):
+            self.buttonsList[i].setFixedHeight(30)
+            self.buttonsLayout.addWidget(self.buttonsList[i])
+        for j in range(len(self.entriesList)):
+            self.entriesLayout.addWidget(self.entriesList[j])
+
+        self.mainLayout.addLayout(self.labelsLayout)
+        self.mainLayout.addLayout(self.entriesLayout)
+        self.mainLayout.addLayout(self.buttonsLayout)
+        self.mainLayout.setAlignment(Qt.AlignCenter)
+        self.mainLayout.setSpacing(40)
+
+
+        self.setLayout(self.mainLayout)
+
+
+
+    def start_button_pressed(self):
+        pass
+
+    def pause_button_pressed(self):
+        pass
+
+    def stop_button_pressed(self):
+        pass
+
+    def entry_enter_key_pressed(self):
+        pass
+
 
 
 
@@ -195,47 +211,43 @@ class Window(QWidget):
         self.timerWorker = Worker()
         self.timerWorker.moveToThread(self.timerThread)
         self.timerWorker.start()
-        self.timerWorker.hrs = int(self.hrsBox.text())
-        self.timerWorker.mins = int(self.minsBox.text())
-        self.timerWorker.secs = int(self.secsBox.text())
-        self.timerWorker.hrsSignal.connect(self.hrsBox.setText)
-        self.timerWorker.minsSignal.connect(self.minsBox.setText)
-        self.timerWorker.secsSignal.connect(self.secsBox.setText)
+        self.timerWorker.hrs = int(self.entriesList[0].text())
+        self.timerWorker.mins = int(self.entriesList[1].text())
+        self.timerWorker.secs = int(self.entriesList[2].text())
+        self.timerWorker.hrsSignal.connect(self.entriesList[0].setText)
+        self.timerWorker.minsSignal.connect(self.entriesList[1].setText)
+        self.timerWorker.secsSignal.connect(self.entriesList[2].setText)
         self.timerWorker.timeExpressionSignal.connect(lambda: self.checkTimerExpression())
-
-
-
-
-        
-
     def checkTimerExpression(self):
         if(self.timerWorker.timeExpression == '0h0m0s'):
             print("The timer has reached its end.")
-            self.hrsBox.setText('00')
-            self.minsBox.setText('00')
-            self.secsBox.setText('00')
-            self.startTimerButton.setEnabled(True)
+            for k in range(len(self.entriesList)):
+                self.entriesList[k].setText('00')
+            self.buttonsList[0].setEnabled(True)
+            self.entriesList[0].setEnabled(True)
+            self.entriesList[1].setEnabled(True)
+            self.entriesList[2].setEnabled(True)
             self.timerWorker.stop()
         else:
             print("The timer is ongoing.")
             pass
     
 
-
+            
     def paintEvent(self, e):
         painter = QPainter()
         painter.begin(self)
-        pen = QPen(QColor('#333333'), 40, Qt.SolidLine)
+        pen = QPen(QColor('#B3B6B7'), 10, Qt.SolidLine)
         painter.setPen(pen)
-        painter.drawRect(0, 0, 600, 300)
+        painter.drawRect(QRect(0, 0, self.width(), self.height()))
         painter.end()
 
 
     def closeEvent(self, event):
         try:
-            print('Closed with threads.')
             self.timerWorker.terminate()
             self.timerThread.terminate()
+            print('Closed with threads.')
         except:
             print('Closed without threads.')
 
@@ -252,4 +264,5 @@ class Window(QWidget):
     def mouseReleaseEvent(self, event):
         self.offset = None
         super().mouseReleaseEvent(event)
+
 
