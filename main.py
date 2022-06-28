@@ -1,6 +1,7 @@
-from gui import Window
+from jRemiteGui import Window
 from PySide6.QtWidgets import QApplication
 import sys
+
 
 def main():
     jRemiteApp = QApplication(sys.argv)
