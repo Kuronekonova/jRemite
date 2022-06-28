@@ -6,20 +6,6 @@ import time, datetime, sys
 
 
 
-"""
-to do:
-- fix timer functionality: DONE!
-- implement multithreading and multiprocessing: DONE!.
-- implement proper stop button: DONE!
-- fix ui look: DONE!
-- add exit, hide buttons: DONE!
-- save previously used timers
-- show current time
-- show when timer will end
-- optimize code
-I won't back away. I'm moving forward. Just like a centipede.
-"""
-
 
 
 
